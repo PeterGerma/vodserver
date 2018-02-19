@@ -1,11 +1,11 @@
 CC = gcc
 ARGS = -Wall -O2 -I .
 
-all: echoserver
+all: vodserver
 
-echoserver: echoserver.c
-	$(CC) $(ARGS) -o echoserver echoserver.c
+echoserver: vodserver.c
+	$(CC) $(ARGS) -o vodserver vodserver.c
 
 
 clean:
-	rm -f *.o echoserver *~
+	rm -f *.o vodserver *~
