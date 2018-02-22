@@ -16,6 +16,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <stdbool.h>
+#include "request.h"
 
 #define BUFSIZE 1024
 #define MAX 10
@@ -52,12 +53,9 @@ struct hostent {
 }
 #endif
 
-/*
- * error - wrapper for perror
- */
-
 int main(int argc, char **argv) {
   
+
   int listenfd, connfd; /* listening socket */
   int portno; /* port to listen on */
   socklen_t clientlen; /* byte size of client's address */
@@ -65,6 +63,8 @@ int main(int argc, char **argv) {
   struct sockaddr_in clientaddr; /* client addr */
   int optval; /* flag value for setsockopt */
   int pid; /*Forked process ID */
+
+  pid = fork();
 
   char* rootDirectory = getenv("PWD");
   strcat(rootDirectory, "/content");

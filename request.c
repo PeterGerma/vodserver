@@ -15,7 +15,14 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <stdbool.h>
+#include "request.h"
 
+//#define DEBUG 1
+#ifdef DEBUG
+#define DEBUG_PRINT fprintf
+#else
+#define DEBUG_PRINT(format, args...)((void)0) //Nothing
+#endif
 
 #define BUFSIZE 1024
 
@@ -37,7 +44,7 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
   hostaddrp = inet_ntoa(clientaddr->sin_addr);
   if (hostaddrp == NULL)
     error("ERROR on inet_ntoa\n");
-  printf("server established connection with %s (%s)\n",
+  DEBUG_PRINT(stderr, "server established connection with %s (%s)\n",
     hostp->h_name, hostaddrp);
 
   /* read: read input string from the client */
@@ -46,15 +53,24 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
   if (n < 0)
     error("ERROR reading from socket");
 
-  printf("server received %d bytes: \n%s", n, buf);
+  DEBUG_PRINT(stderr, "server received %d bytes: \n%s", n, buf);
 
+
+  //Parsing the first line of the HTTP request
+  char* request = strtok(buf, "\t\n");
+  char* requestArg1 = &request[4];
+  requestArg1 = strtok(requestArg1, " ");
+  char* requestArg2 = strtok(NULL, "\t\n");
+  char* requestType = strtok(request, " ");
+  DEBUG_PRINT(stderr,"requestType: %s\nrequestArg1: %s\nrequestArg2: %s\n", requestType, requestArg1, requestArg2);
+
+  //GETTING THE DIFFERENT HEADERS OF THE HTTP REQUEST
   // Confirmed the next line grabs "Range: bytes=0-100"
   char* rangeRequest = strstr(buf, "Range: ");
-  printf("found: %s\n", rangeRequest);
+  DEBUG_PRINT(stderr,"Range Request: %s\n", rangeRequest);
   bool isRange;
   int start = 0;
   int end = 0;
-  printf("Got here\n");
 
   if(rangeRequest == NULL) {
     isRange = false;
@@ -62,30 +78,32 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
   else {
     isRange = true;
   }
-
   if(isRange) {
-    printf("In isRange\n");
-    fprintf(stderr, "%s\n", rangeRequest);
+    DEBUG_PRINT(stderr, "%s\n", rangeRequest);
     for(int i=0; i<strlen(rangeRequest); i++) {
-      fprintf(stderr, "%d\n", rangeRequest[i]);
+      DEBUG_PRINT(stderr, "%d\n", rangeRequest[i]);
     }
     int filled = sscanf(rangeRequest, "Range: bytes=%d-%d\r\n\r\n", &start, &end);
-    fprintf(stderr,"filled: %d\n", filled);
-    fprintf(stderr,"Start: %d, End: %d\n", start, end);
+    DEBUG_PRINT(stderr,"filled: %d\n", filled);
+    DEBUG_PRINT(stderr,"Start: %d, End: %d\n", start, end);
   }
 
-
-  char* request = strtok(buf, "\t\n");
-  char* fileToGet = &request[4];
-  fileToGet = strtok(fileToGet, " ");
-  char* requestType = strtok(request, " ");
-  printf("requestType: %s\nfileToGet: %s\n", requestType, fileToGet);
-
-
-
   char response[BUFSIZE];
-  if(strncmp(fileToGet, "/peer/", 6) == 0) {
-    backendRequest(fileToGet);
+  bzero(response, BUFSIZE);
+
+  if(strncmp(requestArg1, "/peer/", 6) == 0) {
+    strtok(requestArg1, "/");
+    requestArg1 = strtok(NULL, "/");
+    if(strncmp(requestArg1, "add", 3) == 0) {
+      DEBUG_PRINT(stderr, "In add\n");
+
+    }
+    else if(strncmp(requestArg1, "view", 4) == 0) {
+
+    }
+    else if (strncmp(requestArg1, "config", 6) == 0) {
+
+    }
   }
   else if(strcmp(requestType, "GET \0")) {
     
@@ -97,12 +115,12 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
     struct tm *t = gmtime(&now);
 
     strftime(timeHeader, sizeof(timeHeader)-1, "Date: %a, %d %b %Y %H:%M:%S GMT", t); 
-    printf("%s\n", timeHeader);
+    DEBUG_PRINT(stderr, "%s\n", timeHeader);
 
-    printf("Root: %s\n", rootDirectory);  
+    DEBUG_PRINT(stderr, "Root: %s\n", rootDirectory);  
     strcpy(filePath, rootDirectory);
-    strcpy(&filePath[strlen(rootDirectory)], fileToGet);
-    printf("PATH: %s\n", filePath);
+    strcpy(&filePath[strlen(rootDirectory)], requestArg1);
+    DEBUG_PRINT(stderr, "PATH: %s\n", filePath);
 
     FILE *fptr = fopen(filePath, "r");
     int content = open(filePath, O_RDONLY);
@@ -110,17 +128,17 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
     stat(filePath, &st);
     int size = (int)st.st_size;
     char fileSize[BUFSIZE];
-    sprintf(fileSize, "Content-size: %d", size);
-    printf("%s",fileSize);
+    DEBUG_PRINT(stderr, fileSize, "Content-size: %d", size);
+    DEBUG_PRINT(stderr, "%s",fileSize);
 
-    printf("%d\n",content);
+    DEBUG_PRINT(stderr, "%d\n",content);
     if(content == -1) {
       strcpy(response, "HTTP/1.1 404 Not Found\n Date: Sun, 2 Oct 2018 08:56:53 GMT\n Server: Apache/2.2.14 (Win32)\n Last-Modified: Sat, 20 Nov 2004 07:16:26 GMT\n ETag: \"10000000565a5-2c-3e94b66c2e680\"\n Accept-Ranges: bytes\n Content-Length: 44\n Connection: close\n Content-Type: text/html\n X-Pad: avoid browser bug\n\r\n<html><body><h1>404: Content Not Found</h1></body></html>\n");
       n = write(connfd, response, strlen(response));
     } 
     else {
-      printf("Delivering Content!\n");
-      //snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\n%s", timeHeader);
+      DEBUG_PRINT(stderr, "Delivering Content!\n");
+      //snDEBUG_PRINT(response, sizeof(response), "HTTP/1.1 200 OK\r\n%s", timeHeader);
       //response = "HTTP/1.1 200 OK\r\n\r\n";
 
       if(!isRange) {
@@ -130,7 +148,7 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
         strcat(response, "Content-length: ");
         strcat(response, fileSize);
         strcat(response, "\n\r\n");
-        printf("Repsonse Length: %lu\n", strlen(response));
+        DEBUG_PRINT(stderr, "Repsonse Length: %lu\n", strlen(response));
 
         n = write(connfd, response, strlen(response));
         char contentBuf[BUFSIZE];
@@ -145,7 +163,7 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
         strcat(response, "Content-length: ");
         strcat(response, fileSize);
         strcat(response, "\n\r\n");
-        printf("Repsonse Length: %lu\n", strlen(response));
+        DEBUG_PRINT(stderr, "Repsonse Length: %lu\n", strlen(response));
         n = write(connfd, response, strlen(response));
         char contentBuf[BUFSIZE];
 
@@ -159,7 +177,7 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
       }
     }
   }
-  printf("RESPONSE:%s\n", response);
+  DEBUG_PRINT(stderr, "RESPONSE:%s\n", response);
 
   //Example response
   //response = "HTTP/1.1 200 OK\n Date: Sun, 2 Oct 2018 08:56:53 GMT\n Server: Apache/2.2.14 (Win32)\n Last-Modified: Sat, 20 Nov 2004 07:16:26 GMT\n ETag: \"10000000565a5-2c-3e94b66c2e680\"\n Accept-Ranges: bytes\n Content-Length: 44\n Connection: close\n Content-Type: text/html\n X-Pad: avoid browser bug\n\r\n<html><body><h1>It works!</h1></body></html>\n";
