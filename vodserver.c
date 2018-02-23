@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 #include "request.h"
+#include <sys/mman.h>
 
 #define BUFSIZE 1024
 #define MAX 10
@@ -53,6 +54,21 @@ struct hostent {
 }
 #endif
 
+//Taken from https://stackoverflow.com/questions/5656530/how-to-use-shared-memory-with-linux-in-c
+void* create_shared_memory(size_t size) {
+  // Our memory buffer will be readable and writable:
+  int protection = PROT_READ | PROT_WRITE;
+
+  // The buffer will be shared (meaning other processes can access it), but
+  // anonymous (meaning third-party processes cannot obtain an address for it),
+  // so only this process and its children will be able to use it:
+  int visibility = MAP_ANONYMOUS | MAP_SHARED;
+
+  // The remaining parameters to `mmap()` are not important for this use case,
+  // but the manpage for `mmap` explains their purpose.
+  return mmap(NULL, size, protection, visibility, 0, 0);
+}
+
 int main(int argc, char **argv) {
   
 
@@ -64,9 +80,12 @@ int main(int argc, char **argv) {
   int optval; /* flag value for setsockopt */
   int pid; /*Forked process ID */
 
-  pid = fork();
-
-  char* rootDirectory = getenv("PWD");
+  //pid = fork();
+  remoteContent* contentTable = (remoteContent *) create_shared_memory(sizeof(remoteContent)*BUFSIZE);
+  int* contentIndex = create_shared_memory(sizeof(*contentIndex));
+  *contentIndex = 0;
+  char rootDirectory[BUFSIZE];
+  strcpy(rootDirectory, getenv("PWD"));
   strcat(rootDirectory, "/content");
 
 
@@ -121,7 +140,7 @@ int main(int argc, char **argv) {
       if (connfd < 0)
         error("ERROR on accept");
     	close(listenfd);
-      handleRequest(connfd, &clientaddr, rootDirectory);
+      handleRequest(connfd, &clientaddr, rootDirectory, contentTable, contentIndex);
       exit(0);
     }
     close(connfd);

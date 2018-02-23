@@ -17,21 +17,20 @@
 #include <stdbool.h>
 #include "request.h"
 
-//#define DEBUG 1
+#define DEBUG 1
 #ifdef DEBUG
 #define DEBUG_PRINT fprintf
 #else
 #define DEBUG_PRINT(format, args...)((void)0) //Nothing
 #endif
 
-#define BUFSIZE 1024
 
 void error(char *msg) {
   perror(msg);
   exit(1);
 }
 
-void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirectory) {
+void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirectory, remoteContent* contentDirectory, int* contentIndex) {
   struct hostent *hostp; /* client host info */
   char buf[BUFSIZE]; /* message buffer */
   char *hostaddrp; /* dotted decimal host addr string */
@@ -80,9 +79,9 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
   }
   if(isRange) {
     DEBUG_PRINT(stderr, "%s\n", rangeRequest);
-    for(int i=0; i<strlen(rangeRequest); i++) {
+    /*for(int i=0; i<strlen(rangeRequest); i++) {
       DEBUG_PRINT(stderr, "%d\n", rangeRequest[i]);
-    }
+    } */
     int filled = sscanf(rangeRequest, "Range: bytes=%d-%d\r\n\r\n", &start, &end);
     DEBUG_PRINT(stderr,"filled: %d\n", filled);
     DEBUG_PRINT(stderr,"Start: %d, End: %d\n", start, end);
@@ -92,10 +91,28 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
   bzero(response, BUFSIZE);
 
   if(strncmp(requestArg1, "/peer/", 6) == 0) {
-    strtok(requestArg1, "/");
-    requestArg1 = strtok(NULL, "/");
+    requestArg1 = &requestArg1[6];
+    DEBUG_PRINT(stderr, "requestArg1: %s\n" , requestArg1);
     if(strncmp(requestArg1, "add", 3) == 0) {
       DEBUG_PRINT(stderr, "In add\n");
+      const char* path = strtok(&strstr(requestArg1, "path=")[5], "&");
+      const char* remoteHost = strtok(NULL, "&");
+      DEBUG_PRINT(stderr, "remoteHost: %s\n", remoteHost);
+      int remotePortNo = (int) strtok(NULL, "&");
+      DEBUG_PRINT(stderr, "remotePortNo: %d\n", remotePortNo);
+      DEBUG_PRINT(stderr, "%s\n", path);
+      int i;
+      int found = 0;
+      for(i=0; i<*contentIndex; i++) {
+        if(contentDirectory[i].path != NULL) {
+          if(strcmp(contentDirectory[i].path, path) == 0) {
+            found = 1;
+          }
+        }
+      }
+      if(found == 0) {
+        strcpy(contentDirectory[*contentIndex].path, path);
+      }
 
     }
     else if(strncmp(requestArg1, "view", 4) == 0) {
@@ -105,7 +122,7 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
 
     }
   }
-  else if(strcmp(requestType, "GET \0")) {
+  else if(strncmp(requestType, "GET", 3) == 0) {
     
     char filePath[BUFSIZE];
     
@@ -128,17 +145,16 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
     stat(filePath, &st);
     int size = (int)st.st_size;
     char fileSize[BUFSIZE];
-    DEBUG_PRINT(stderr, fileSize, "Content-size: %d", size);
-    DEBUG_PRINT(stderr, "%s",fileSize);
+    DEBUG_PRINT(stderr, "Content-size: %d\n", size);
 
-    DEBUG_PRINT(stderr, "%d\n",content);
+    DEBUG_PRINT(stderr, "contentfd: %d\n",content);
     if(content == -1) {
       strcpy(response, "HTTP/1.1 404 Not Found\n Date: Sun, 2 Oct 2018 08:56:53 GMT\n Server: Apache/2.2.14 (Win32)\n Last-Modified: Sat, 20 Nov 2004 07:16:26 GMT\n ETag: \"10000000565a5-2c-3e94b66c2e680\"\n Accept-Ranges: bytes\n Content-Length: 44\n Connection: close\n Content-Type: text/html\n X-Pad: avoid browser bug\n\r\n<html><body><h1>404: Content Not Found</h1></body></html>\n");
       n = write(connfd, response, strlen(response));
     } 
     else {
       DEBUG_PRINT(stderr, "Delivering Content!\n");
-      //snDEBUG_PRINT(response, sizeof(response), "HTTP/1.1 200 OK\r\n%s", timeHeader);
+      //DEBUG_PRINT(response, sizeof(response), "HTTP/1.1 200 OK\r\n%s", timeHeader);
       //response = "HTTP/1.1 200 OK\r\n\r\n";
 
       if(!isRange) {
@@ -156,7 +172,7 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
           write(connfd, contentBuf, n);
         }
       }
-      else {
+      else if(isRange) {
         strcpy(response, "HTTP/1.1 206 Partial Content\n");
         strcat(response, timeHeader);
         strcat(response, "\n");

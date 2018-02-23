@@ -10,6 +10,9 @@
 #ifndef _REQUEST_H_
 #define _REQUEST_H_
 
+#define BUFSIZE 1024
+
+
 typedef struct remoteContent {
   char* path;
   char* remoteHost;
@@ -29,7 +32,7 @@ void error(char* msg);
  *  @param clientaddr the HTTP information of the client
  *  @param rootDirecotry the rootDirectory of the project
  */
-void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirectory);
+void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirectory, remoteContent* contentDirectory, int* contentIndex);
 
 
 #endif /* _REQUEST_H_ */
