@@ -42,6 +42,10 @@ nlist* nlist_create(uint32_t max_nodes) {
 void node_add(nlist list, Node node) {
 }
 
+/*looks for node with desired content path*/
+Node* find_content(char* content, nlist* nl) {
+}
+
 /*create a packet*/
 Packet *packet_create(uint16_t source, uint16_t destination, uint16_t sequence, char* data) {
 }
