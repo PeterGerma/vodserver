@@ -31,9 +31,39 @@ Packet *packet_create(uint16_t source, uint16_t destination, uint16_t sequence, 
 }
 
 /*convert a packet struct to a string*/
-char *packet_to_string(Packet p) {
+char *packet_to_string(Packet* p) {
+	char* buf = "";
+	char* numbuf[11];
+
+	sprintf(numbuf, p->source);
+	strcat(buf, numbuf);
+
+	sprintf(numbuf, p->destination);
+	strcat(buf, numbuf);
+
+	sprintf(numbuf, p->sequence);
+	strcat(buf, numbuf);
+
+	sprintf(numbuf, p->ack);
+	strcat(buf, numbuf);
+
+	sprintf(numbuf, p->window);
+	strcat(buf, numbuf);
+
+	sprintf(numbuf, p->checksum);
+	strcat(buf, numbuf);
+
+	strcat(buf, p->buf);
 }
 
 /*convert a string to a packet*/
 Packet *string_to_packet(char* buf) {
+	Packet* p;
+	p->source = (uint16_t)atoi(strtok(buf, "\n"));
+	p->destination = (uint16_t)atoi(strtok(NULL, "\n"));
+	p->sequence = (uint32_t)atoi(strtok(NULL, "\n"));
+	p->ack = (uint32_t)atoi(strtok(NULL, "\n"));
+	p->window = (uint16_t)atoi(strtok(NULL, "\n"));
+	p->checksum = (uint16_t)atoi(strtok(NULL, "\n"));
+	p->buf = strtok(NULL, "\n");
 }
