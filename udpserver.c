@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
    * bind: associate the parent socket with a port 
    */
   if (bind(sockfd, (struct sockaddr *) &serveraddr, 
-	   sizeof(serveraddr)) < 0) 
+	  sizeof(serveraddr)) < 0) 
     error("ERROR on binding");
 
   /* 

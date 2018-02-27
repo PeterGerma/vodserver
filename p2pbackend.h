@@ -31,29 +31,22 @@ typedef struct Node_List {
 } nlist;
 
 /*create a node for p2p transfer*/
-Node *node_create(uint16_t port, char* content, char* host) {
-}
+Node *node_create(uint16_t port, char* content, char* host);
 
 /*create a node list*/
-nlist* nlist_create(uint32_t max_nodes) {
-}
+nlist* nlist_create(uint32_t max_nodes);
 
 /*add a node to the list of nodes*/
-void node_add(nlist list, Node node) {
-}
+void node_add(nlist list, Node node);
 
 /*looks for node with desired content path*/
-Node* find_content(char* content, nlist* nl) {
-}
+Node* find_content(char* content, nlist* nl);
 
 /*create a packet*/
-Packet *packet_create(uint16_t source, uint16_t destination, uint16_t sequence, char* data) {
-}
+Packet *packet_create(uint16_t source, uint16_t destination, uint16_t sequence, char* data);
 
 /*convert a packet struct to a string*/
-char *packet_to_string(Packet p) {
-}
+char *packet_to_string(Packet p);
 
 /*convert a string to a packet*/
-Packet *string_to_packet(char* buf) {
-}
+Packet *string_to_packet(char* buf);

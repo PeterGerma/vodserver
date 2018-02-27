@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 #include "request.h"
+#include "p2pbackend.h"
 
 #define DEBUG 1
 #ifdef DEBUG
@@ -25,7 +26,7 @@
 #endif
 
 
-void sendToBackend(char* message) {
+void sendToBackend(Node info) {
   int sockfd, portno, n;
   int serverlen;
   struct sockaddr_in serveraddr;
@@ -114,6 +115,9 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
       DEBUG_PRINT(stderr, "remotePortNo: %d\n", remotePortNo);
       DEBUG_PRINT(stderr, "%s\n", path);
 
+      Node* info = node_create(remotePortNo, path, remoteHost);
+      
+      sendToBackEnd(info);
 
     }
     else if(strncmp(requestArg1, "view", 4) == 0) {

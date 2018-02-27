@@ -91,10 +91,11 @@ char *packet_to_string(Packet* p) {
 	strcat(buf, ",");
 
 	strcat(buf, p->buf);
+	return buf;
 }
 
 /*convert a string to a packet*/
-Packet *string_to_packet(char* buf) {
+Packet* string_to_packet(char* buf) {
 	Packet* p;
 	p->source = (uint16_t)atoi(strtok(buf, ","));
 	p->destination = (uint16_t)atoi(strtok(NULL, ","));
@@ -103,4 +104,5 @@ Packet *string_to_packet(char* buf) {
 	p->window = (uint16_t)atoi(strtok(NULL, ","));
 	p->checksum = (uint16_t)atoi(strtok(NULL, ","));
 	p->buf = strtok(NULL, ",");
+	return p;
 }
