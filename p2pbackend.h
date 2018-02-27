@@ -34,6 +34,10 @@ typedef struct Node_List {
 Node *node_create(uint16_t port, char* content, char* host) {
 }
 
+/*create a node list*/
+nlist* nlist_create(uint32_t max_nodes) {
+}
+
 /*add a node to the list of nodes*/
 void node_add(nlist list, Node node) {
 }
