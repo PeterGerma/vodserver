@@ -25,12 +25,24 @@
 #endif
 
 
+void sendToBackend(char* message) {
+  int sockfd, portno, n;
+  int serverlen;
+  struct sockaddr_in serveraddr;
+  struct hostent *server;
+  char *hostname;
+  char buf[BUFSIZE];
+
+
+}
+
+
 void error(char *msg) {
   perror(msg);
   exit(1);
 }
 
-void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirectory, remoteContent* contentDirectory, int* contentIndex) {
+void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirectory, remoteContent* contentDirectory, int* contentIndex, int backPortNo) {
   struct hostent *hostp; /* client host info */
   char buf[BUFSIZE]; /* message buffer */
   char *hostaddrp; /* dotted decimal host addr string */
@@ -101,22 +113,11 @@ void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirecto
       int remotePortNo = (int) strtok(NULL, "&");
       DEBUG_PRINT(stderr, "remotePortNo: %d\n", remotePortNo);
       DEBUG_PRINT(stderr, "%s\n", path);
-      int i;
-      int found = 0;
-      for(i=0; i<*contentIndex; i++) {
-        if(contentDirectory[i].path != NULL) {
-          if(strcmp(contentDirectory[i].path, path) == 0) {
-            found = 1;
-          }
-        }
-      }
-      if(found == 0) {
-        strcpy(contentDirectory[*contentIndex].path, path);
-      }
+
 
     }
     else if(strncmp(requestArg1, "view", 4) == 0) {
-
+      
     }
     else if (strncmp(requestArg1, "config", 6) == 0) {
 

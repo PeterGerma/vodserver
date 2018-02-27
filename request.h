@@ -32,7 +32,7 @@ void error(char* msg);
  *  @param clientaddr the HTTP information of the client
  *  @param rootDirecotry the rootDirectory of the project
  */
-void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirectory, remoteContent* contentDirectory, int* contentIndex);
+void handleRequest(int connfd, struct sockaddr_in *clientaddr, char* rootDirectory, remoteContent* contentDirectory, int* contentIndex, int backPortNo);
 
 
 #endif /* _REQUEST_H_ */

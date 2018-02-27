@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
   struct sockaddr_in clientaddr; /* client addr */
   int optval; /* flag value for setsockopt */
   int pid; /*Forked process ID */
+  int backPortNo; //backend port num
 
   //pid = fork();
   remoteContent* contentTable = (remoteContent *) create_shared_memory(sizeof(remoteContent)*BUFSIZE);
@@ -90,13 +91,14 @@ int main(int argc, char **argv) {
 
 
   /* check command line args */
-  if (argc != 2) {
-    fprintf(stderr, "usage: %s <port>\n", argv[0]);
+  if (argc != 3) {
+    fprintf(stderr, "usage: %s <port> <port2>\n", argv[0]);
     exit(1);
   }
   fprintf(stderr,"program running: %s\n",argv[0]);
   fprintf(stderr,"port #: %s\n",argv[1]);
   portno = atoi(argv[1]);
+  backPortNo = atoi(argv[2]);
 
 
 
@@ -140,7 +142,7 @@ int main(int argc, char **argv) {
       if (connfd < 0)
         error("ERROR on accept");
     	close(listenfd);
-      handleRequest(connfd, &clientaddr, rootDirectory, contentTable, contentIndex);
+      handleRequest(connfd, &clientaddr, rootDirectory, contentTable, contentIndex, backPortNo);
       exit(0);
     }
     close(connfd);
