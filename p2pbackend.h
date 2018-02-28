@@ -46,7 +46,7 @@ Node* find_content(char* content, nlist* nl);
 Packet *packet_create(uint16_t source, uint16_t destination, uint16_t sequence, char* data);
 
 /*convert a packet struct to a string*/
-char *packet_to_string(Packet p);
+char *packet_to_string(Packet* p);
 
 /*convert a string to a packet*/
 Packet *string_to_packet(char* buf);
